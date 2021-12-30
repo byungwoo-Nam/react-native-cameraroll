@@ -385,23 +385,52 @@ public class CameraRollModule extends ReactContextBaseJavaModule {
           limit = "limit=" + mAfter + "," + (mFirst + 1);
         }
 
-        Cursor media = resolver.query(
-            MediaStore.Files.getContentUri("external").buildUpon().encodedQuery(limit).build(),
-            PROJECTION,
-            selection.toString(),
-            selectionArgs.toArray(new String[selectionArgs.size()]),
-            Images.Media.DATE_ADDED + " DESC, " + Images.Media.DATE_MODIFIED + " DESC");
-        if (media == null) {
-          mPromise.reject(ERROR_UNABLE_TO_LOAD, "Could not get media");
-        } else {
-          try {
-            putEdges(resolver, media, response, mFirst, mInclude);
-            putPageInfo(media, response, mFirst, !TextUtils.isEmpty(mAfter) ? Integer.parseInt(mAfter) : 0);
-          } finally {
-            media.close();
-            mPromise.resolve(response);
-          }
-        }
+        
+        Cursor media = null;
+String[] selectionArgsArray = selectionArgs.toArray(new String[selectionArgs.size()]);
+String selectionString = selection.toString();
+String sortString = Images.Media.DATE_ADDED + " DESC, " + Images.Media.DATE_MODIFIED + " DESC";
+
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+  Bundle selectionBundle = new Bundle();
+  selectionBundle.putInt(ContentResolver.QUERY_ARG_LIMIT, mFirst + 1);
+  selectionBundle.putInt(ContentResolver.QUERY_ARG_OFFSET, 0);
+  selectionBundle.putString(ContentResolver.QUERY_ARG_SQL_SORT_ORDER, sortString);
+  selectionBundle.putString(ContentResolver.QUERY_ARG_SQL_SELECTION, selectionString);
+  selectionBundle.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, selectionArgsArray);
+
+  media = resolver.query(
+    MediaStore.Files.getContentUri("external"),
+    PROJECTION,
+    selectionBundle,
+    null
+  );
+} else {
+  media = resolver.query(
+    MediaStore.Files.getContentUri("external"),
+    PROJECTION,
+    selectionString,
+    selectionArgsArray,
+    sortString + " LIMIT " + (mFirst + 1)
+  );
+}
+//         Cursor media = resolver.query(
+//             MediaStore.Files.getContentUri("external").buildUpon().encodedQuery(limit).build(),
+//             PROJECTION,
+//             selection.toString(),
+//             selectionArgs.toArray(new String[selectionArgs.size()]),
+//             Images.Media.DATE_ADDED + " DESC, " + Images.Media.DATE_MODIFIED + " DESC");
+//         if (media == null) {
+//           mPromise.reject(ERROR_UNABLE_TO_LOAD, "Could not get media");
+//         } else {
+//           try {
+//             putEdges(resolver, media, response, mFirst, mInclude);
+//             putPageInfo(media, response, mFirst, !TextUtils.isEmpty(mAfter) ? Integer.parseInt(mAfter) : 0);
+//           } finally {
+//             media.close();
+//             mPromise.resolve(response);
+//           }
+//         }
       } catch (SecurityException e) {
         mPromise.reject(
             ERROR_UNABLE_TO_LOAD_PERMISSION,
