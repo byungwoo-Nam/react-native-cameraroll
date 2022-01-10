@@ -152,7 +152,6 @@ RCT_EXPORT_MODULE()
       [delegate URLRequest:cancellationBlock didReceiveData:data];
       }
       [delegate URLRequest:cancellationBlock didCompleteWithError:error];
-         }
     }];
   }
   
