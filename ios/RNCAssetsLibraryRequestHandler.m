@@ -86,7 +86,7 @@ RCT_EXPORT_MODULE()
   }
 
   PHAsset *const _Nonnull asset = [fetchResult firstObject];
-    NSLog(@"LOG!!!!!!!!!!!START");
+
   // When we're uploading a video, provide the full data but in any other case,
   // provide only the thumbnail of the video.
   if (asset.mediaType == PHAssetMediaTypeVideo && isPHUpload) {
@@ -123,20 +123,18 @@ RCT_EXPORT_MODULE()
     PHImageRequestOptions *const requestOptions = [PHImageRequestOptions new];
     requestOptions.networkAccessAllowed = YES;
 
-    [[PHImageManager defaultManager] requestImageForAsset:asset
-                                               targetSize:CGSizeMake(50, 50)
-                                              contentMode:0
+    [[PHImageManager defaultManager] requestImageDataForAsset:asset
                                                       options:requestOptions
-                                                resultHandler:^(UIImage * _Nullable imageData,
+                                                resultHandler:^(NSData * _Nullable imageData,
+                                                                NSString * _Nullable dataUTI,
+                                                                UIImageOrientation orientation,
                                                                 NSDictionary * _Nullable info) {
       NSError *const error = [info objectForKey:PHImageErrorKey];
       if (error) {
         [delegate URLRequest:cancellationBlock didCompleteWithError:error];
         return;
       }
-        NSData * data = UIImageJPEGRepresentation(imageData, 1.0);
 
-        /*
       NSInteger const length = [imageData length];
       CFStringRef const dataUTIStringRef = (__bridge CFStringRef _Nonnull)(dataUTI);
       CFStringRef const mimeType = UTTypeCopyPreferredTagWithClass(dataUTIStringRef, kUTTagClassMIMEType);
@@ -146,14 +144,11 @@ RCT_EXPORT_MODULE()
                                                    expectedContentLength:length
                                                         textEncodingName:nil];
       if (mimeType) CFRelease(mimeType);
-*/
-         if (data) {
-             NSURLResponse *const response = [[NSURLResponse alloc] initWithURL:request.URL MIMEType:nil expectedContentLength:data.length textEncodingName:nil];
+
       [delegate URLRequest:cancellationBlock didReceiveResponse:response];
 
-      [delegate URLRequest:cancellationBlock didReceiveData:data];
+      [delegate URLRequest:cancellationBlock didReceiveData:imageData];
       [delegate URLRequest:cancellationBlock didCompleteWithError:nil];
-         }
     }];
   }
   
