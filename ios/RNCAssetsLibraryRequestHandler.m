@@ -123,7 +123,7 @@ RCT_EXPORT_MODULE()
     requestOptions.networkAccessAllowed = YES;
 
     [[PHImageManager defaultManager] requestImageForAsset:asset
-                                               targetSize:CGSizeMake(50, 50)
+                                               targetSize:CGSizeMake(20, 20)
                                               contentMode:0
                                                       options:requestOptions
                                                 resultHandler:^(UIImage * _Nullable imageData,
