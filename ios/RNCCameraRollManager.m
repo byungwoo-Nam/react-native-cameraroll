@@ -386,6 +386,32 @@ RCT_EXPORT_METHOD(getPhotos:(NSDictionary *)params
                                                   ? @"audio"
                                                   : @"unknown")));
       CLLocation *const loc = asset.location;
+        
+        
+        ///////////// 썸네일 관련 추가
+        __block NSString *thumbnailResult = @"";
+
+        PHImageManager *manager = [PHImageManager defaultManager];
+        PHImageRequestOptions* options = [[PHImageRequestOptions alloc] init];
+        options.synchronous = YES;
+          options.networkAccessAllowed = YES;
+          options.resizeMode = PHImageRequestOptionsResizeModeFast;
+          options.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+       
+        CGSize targetSize = CGSizeMake(300, 300);
+        [manager requestImageForAsset:(PHAsset *)asset
+                             targetSize:(CGSize)targetSize
+                            contentMode:(PHImageContentMode)PHImageContentModeAspectFit
+                                options:(PHImageRequestOptions *)options
+                          resultHandler:^(UIImage * _Nullable image, NSDictionary * _Nullable info) {
+            NSError *const error = [info objectForKey:PHImageErrorKey];
+            if (error) {
+              reject(@"", @"", error);
+              return;
+            }
+            
+            thumbnailResult = [UIImageJPEGRepresentation(image, 0.9) base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
+          }];
 
       [assets addObject:@{
         @"node": @{
@@ -396,6 +422,7 @@ RCT_EXPORT_METHOD(getPhotos:(NSDictionary *)params
               @"filename": (includeFilename && originalFilename ? originalFilename : [NSNull null]),
               @"height": (includeImageSize ? @([asset pixelHeight]) : [NSNull null]),
               @"width": (includeImageSize ? @([asset pixelWidth]) : [NSNull null]),
+              @"thumbnail": thumbnailResult,
               @"fileSize": (includeFileSize && fileSize ? fileSize : [NSNull null]),
               @"playableDuration": (includePlayableDuration && asset.mediaType != PHAssetMediaTypeImage
                                     ? @([asset duration]) // fractional seconds
